@@ -1,0 +1,90 @@
+rmmod kvm_intel
+rmmod kvm
+modprobe kvm allow_unsafe_assigned_interrupts=1
+modprobe kvm_intel
+
+ # Customize: Total number of 1Gb and 10Gb data ports to be virtualized.
+ INTF_SET="ens2f0 ens2f1 enp131s0f0 enp131s0f1"
+
+ # Customize: Here we assume all the interfaces to be virtualized have names
+ #            eth1, eth2, eth3, ....
+
+ for intf in `echo $INTF_SET`
+ do
+                 echo $intf
+                 echo 4  > /sys/class/net/${intf}/device/sriov_numvfs
+                 ip link set dev ${intf} up
+ done
+ rmmod ixgbevf
+ rmmod i40evf
+
+ modprobe vfio-pci
+ modprobe vfio
+
+
+ echo 8086 154c | tee /sys/bus/pci/drivers/vfio-pci/new_id
+ echo 8086 1515 | tee /sys/bus/pci/drivers/vfio-pci/new_id
+ echo 8086 1583 | tee /sys/bus/pci/drivers/vfio-pci/new_id
+
+ chown -R libvirt-qemu:kvm /dev/vfio/*
+
+ for VF in  0 1 2 3 
+ do
+    echo $VF
+    ip link set dev enp131s0f0 vf $VF spoof off
+    ip link set dev enp131s0f1 vf $VF spoof off
+    ip link set dev ens2f0 vf $VF spoof off
+    ip link set dev ens2f1 vf $VF spoof off
+ done
+
+
+ip link set dev enp131s0f0 vf 0 mac 70:20:70:10:00:00
+ip link set dev enp131s0f0 vf 1 mac 70:20:70:10:01:01
+ip link set dev enp131s0f0 vf 2 mac 70:20:70:10:02:02
+ip link set dev enp131s0f0 vf 3 mac 70:20:70:10:03:03
+ip link set dev enp131s0f1 vf 0 mac 70:20:70:10:00:00
+ip link set dev enp131s0f1 vf 1 mac 70:20:70:10:01:01
+ip link set dev enp131s0f1 vf 2 mac 70:20:70:10:02:02
+ip link set dev enp131s0f1 vf 3 mac 70:20:70:10:03:03
+
+ip link set dev ens2f0 vf 0 mac 70:20:80:10:00:00
+ip link set dev ens2f0 vf 1 mac 70:20:80:10:01:01
+ip link set dev ens2f0 vf 2 mac 70:20:80:10:02:02
+ip link set dev ens2f0 vf 3 mac 70:20:80:10:03:03
+ip link set dev ens2f1 vf 0 mac 70:20:80:10:00:00
+ip link set dev ens2f1 vf 1 mac 70:20:80:10:01:01
+ip link set dev ens2f1 vf 2 mac 70:20:80:10:02:02
+ip link set dev ens2f1 vf 3 mac 70:20:80:10:03:03
+
+
+ip link set dev enp131s0f0 vf 0 spoof off
+ip link set dev enp131s0f0 vf 1 spoof off
+ip link set dev enp131s0f1 vf 0 spoof off
+ip link set dev enp131s0f1 vf 1 spoof off
+
+ip link set dev ens2f0 vf 0 spoof off
+ip link set dev ens2f0 vf 1 spoof off
+ip link set dev ens2f1 vf 0 spoof off
+ip link set dev ens2f1 vf 1 spoof off
+
+ip link set dev enp131s0f0 vf 0 mac 70:20:70:10:00:00
+ip link set dev enp131s0f0 vf 1 mac 70:20:70:10:01:01
+ip link set dev enp131s0f0 vf 2 mac 70:20:70:10:02:02
+ip link set dev enp131s0f0 vf 3 mac 70:20:70:10:03:03
+ip link set dev enp131s0f1 vf 0 mac 70:20:70:10:00:04
+ip link set dev enp131s0f1 vf 1 mac 70:20:70:10:01:05
+ip link set dev enp131s0f1 vf 2 mac 70:20:70:10:02:06
+ip link set dev enp131s0f1 vf 3 mac 70:20:70:10:03:07
+
+ip link set dev ens2f0 vf 0 mac 70:20:80:10:00:00
+ip link set dev ens2f0 vf 1 mac 70:20:80:10:01:01
+ip link set dev ens2f0 vf 2 mac 70:20:80:10:02:02
+ip link set dev ens2f0 vf 3 mac 70:20:80:10:03:03
+ip link set dev ens2f1 vf 0 mac 70:20:80:10:00:04
+ip link set dev ens2f1 vf 1 mac 70:20:80:10:01:05
+ip link set dev ens2f1 vf 2 mac 70:20:80:10:02:06
+ip link set dev ens2f1 vf 3 mac 70:20:80:10:03:07
+
+
+
+

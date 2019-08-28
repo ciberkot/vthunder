@@ -1,0 +1,37 @@
+modprobe vfio_pci
+chmod a+x /dev/vfio
+chmod 0666 /dev/vfio/*
+
+modprobe openvswitch
+
+rm /usr/local/var/run/openvswitch/vhost-bond*
+
+#/root/dpdk-stable-17.02.1/usertools/dpdk-devbind.py -b vfio-pci 0000:81:00.0 0000:81:00.1 0000:81:00.2 0000:81:00.3 0000:01:00.0 0000:01:00.1 0000:03:00.0 0000:03:00.1 
+/root/dpdk-stable-17.02.1/usertools/dpdk-devbind.py -b vfio-pci 0000:83:00.0 0000:83:00.1 0000:85:00.0 0000:85:00.1
+
+
+echo "DPDK-Enabled Interface Status:"
+echo
+/root/dpdk-stable-17.02.1/usertools/dpdk-devbind.py --status | grep -i drv=vfio-pci
+
+export DB_SOCK=/usr/local/var/run/openvswitch/db.sock
+
+ovsdb-server --remote=punix:$DB_SOCK --remote=db:Open_vSwitch,Open_vSwitch,manager_options   --pidfile --detach
+
+echo "Deleting bridges from OVS configuration..."
+ovs-vsctl del-br br0
+ovs-vsctl del-br br1
+ovs-vsctl del-br br2
+ovs-vsctl del-br br3
+
+export LCORE_MASK=80002
+export PMD_MASK=C0033C000
+
+echo "Settings: L-Core mask is $LCORE_MASK, PMD mask is $PMD_MASK."  
+
+ovs-vsctl --no-wait set Open_vSwitch . other_config:dpdk-init=true other_config:dpdk-lcore-mask=$LCORE_MASK other_config:pmd-cpu-mask=$PMD_MASK other_config:dpdk-socket-mem="2048,2048"
+ 
+echo "Starting OVS..."
+echo
+ovs-vswitchd unix:$DB_SOCK --pidfile --detach --log-file=/usr/local/var/log/openvswitch/ovs-vswitchd.log
+

@@ -1,0 +1,113 @@
+
+echo "Creating bridges..."
+ovs-vsctl add-br br0 -- set bridge br0 datapath_type=netdev
+ovs-vsctl add-br br1 -- set bridge br1 datapath_type=netdev
+ovs-vsctl add-br br2 -- set bridge br2 datapath_type=netdev
+ovs-vsctl add-br br3 -- set bridge br3 datapath_type=netdev
+
+#Bridge 0
+#0000:83:00.0 'Ethernet Controller XL710 for 40GbE QSFP+' if=enp131s0f0 drv=i40e unused=vfio-pci
+#0000:83:00.1 'Ethernet Controller XL710 for 40GbE QSFP+' if=enp131s0f1 drv=i40e unused=vfio-pci
+#0000:85:00.0 'Ethernet Controller XL710 for 40GbE QSFP+' if=ens2f0 drv=i40e unused=vfio-pci
+#0000:85:00.1 'Ethernet Controller XL710 for 40GbE QSFP+' if=ens2f1 drv=i40e unused=vfio-pci
+
+
+ovs-vsctl add-port br0 dpdk-enp131s0f0    \
+-- set Interface dpdk-enp131s0f0 type=dpdk options:dpdk-devargs=0000:83:00.0 ofport_request=1 
+
+ovs-vsctl add-port br0 vhost0  \
+-- set Interface vhost0 type=dpdkvhostuser ofport_request=2
+
+#Bridge 1
+ovs-vsctl add-port br1 dpdk-enp131s0f1    \
+-- set Interface dpdk-enp131s0f1 type=dpdk options:dpdk-devargs=0000:83:00.1 ofport_request=1
+
+ovs-vsctl add-port br1 vhost1 \
+-- set Interface vhost1 type=dpdkvhostuser ofport_request=2
+
+#Bridge 2
+
+ovs-vsctl add-port br2 dpdk-ens2f0    \
+-- set Interface dpdk-ens2f0 type=dpdk options:dpdk-devargs=0000:85:00.0 ofport_request=1
+
+ovs-vsctl add-port br2 vhost2  \
+-- set Interface vhost2 type=dpdkvhostuser ofport_request=2
+
+#Bridge 3
+ovs-vsctl add-port br3 dpdk-ens2f1    \
+-- set Interface dpdk-ens2f1 type=dpdk options:dpdk-devargs=0000:85:00.1 ofport_request=1
+
+ovs-vsctl add-port br3 vhost3 \
+-- set Interface vhost3 type=dpdkvhostuser ofport_request=2
+
+
+
+# PMD affinities for NUMA 1
+
+ovs-vsctl set interface dpdk-enp131s0f0 other_config:pmd-rxq-affinity="0:20"
+ovs-vsctl set interface dpdk-enp131s0f1 other_config:pmd-rxq-affinity="0:21"
+ovs-vsctl set interface dpdk-ens2f0   other_config:pmd-rxq-affinity="0:34"
+ovs-vsctl set interface dpdk-ens2f1   other_config:pmd-rxq-affinity="0:35"
+
+ovs-vsctl set interface vhost0 other_config:pmd-rxq-affinity="0:20"
+ovs-vsctl set interface vhost1 other_config:pmd-rxq-affinity="0:21"
+ovs-vsctl set interface vhost2 other_config:pmd-rxq-affinity="0:34"
+ovs-vsctl set interface vhost3 other_config:pmd-rxq-affinity="0:35"
+
+
+#Static flows for bridge 0
+# 1(dpdk-ens1f0): addr:00:e0:ed:5d:c4:91
+# 2(dpdk-ens1f1): addr:00:e0:ed:5d:c4:92
+# 3(vhost-bond2): addr:00:00:00:00:00:00
+# 4(vhost-bond1): addr:00:00:00:00:00:00
+# We should match 1 and 4, 2 and 3
+
+ovs-ofctl add-flow br0 in_port=1,action=output:2
+ovs-ofctl add-flow br0 in_port=2,action=output:1
+
+
+#Static flows for bridge 1
+# 1(dpdk-ens1f3): addr:00:e0:ed:5d:c4:94
+# 2(dpdk-ens1f2): addr:00:e0:ed:5d:c4:93
+# 3(vhost-bond4): addr:00:00:00:00:00:00
+# 4(vhost-bond3): addr:00:00:00:00:00:00
+# We should match 2 and 4, 1 and 3
+
+ovs-ofctl add-flow br1 in_port=1,action=output:2
+ovs-ofctl add-flow br1 in_port=2,action=output:1
+
+
+#Static flows for bridge 2
+# 1(dpdk-enp3s0f1): addr:0c:c4:7a:d4:42:71
+# 2(dpdk-enp3s0f0): addr:0c:c4:7a:d4:42:70
+# 3(vhost-bond6): addr:00:00:00:00:00:00
+# 4(vhost-bond5): addr:00:00:00:00:00:00
+# We whould match 1 and 4, 2 and 3
+
+ovs-ofctl add-flow br2 in_port=1,action=output:2
+ovs-ofctl add-flow br2 in_port=2,action=output:1
+
+
+#Static flows for bridge 3
+# 1(dpdk-enp1s0f0): addr:0c:c4:7a:d4:42:6e
+# 2(dpdk-enp1s0f1): addr:0c:c4:7a:d4:42:6f
+# 3(vhost-bond8): addr:00:00:00:00:00:00
+# 4(vhost-bond7): addr:00:00:00:00:00:00
+# We should match 1 and 4, 2 and 3 
+
+ovs-ofctl add-flow br3 in_port=1,action=output:2
+ovs-ofctl add-flow br3 in_port=2,action=output:1
+
+
+#MTU problem
+
+ovs-vsctl set Interface dpdk-enp131s0f0 mtu_request=1600
+ovs-vsctl set Interface dpdk-enp131s0f1 mtu_request=1600
+ovs-vsctl set Interface vhost0 mtu_request=1600
+ovs-vsctl set Interface vhost1 mtu_request=1600
+
+ovs-vsctl set Interface dpdk-ens2f0 mtu_request=1600
+ovs-vsctl set Interface dpdk-ens2f1 mtu_request=1600
+ovs-vsctl set Interface vhost2 mtu_request=1600
+ovs-vsctl set Interface vhost3 mtu_request=1600
+
