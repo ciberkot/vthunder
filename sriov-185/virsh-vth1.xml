@@ -1,0 +1,101 @@
+<domain type='kvm'>
+  <name>vTH-1</name>
+  <uuid>4a9b3f53-fa2a-47f3-a757-dd87720d9d1d</uuid>
+  <memory unit='KiB'>4096000</memory>
+  <currentMemory unit='KiB'>4096000</currentMemory>
+  <vcpu placement='static'>4</vcpu>
+  <os>
+    <type arch='x86_64' machine='rhel6.5.0'>hvm</type>
+    <boot dev='hd'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+    <pae/>
+  </features>
+  <cpu mode='custom' match='exact'>
+    <model fallback='allow'>Nehalem</model>
+    <vendor>Intel</vendor>
+    <feature policy='require' name='pbe'/>
+    <feature policy='require' name='rdtscp'/>
+    <feature policy='require' name='est'/>
+    <feature policy='require' name='vmx'/>
+    <feature policy='require' name='ds'/>
+    <feature policy='require' name='smx'/>
+    <feature policy='require' name='ss'/>
+    <feature policy='require' name='vme'/>
+    <feature policy='require' name='dtes64'/>
+    <feature policy='require' name='tm2'/>
+    <feature policy='require' name='ht'/>
+    <feature policy='require' name='dca'/>
+    <feature policy='require' name='pcid'/>
+    <feature policy='require' name='tm'/>
+    <feature policy='require' name='pdcm'/>
+    <feature policy='require' name='pdpe1gb'/>
+    <feature policy='require' name='ds_cpl'/>
+    <feature policy='require' name='xtpr'/>
+    <feature policy='require' name='acpi'/>
+    <feature policy='require' name='monitor'/>
+  </cpu>
+  <clock offset='utc'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2' cache='none'/>
+      <source file='/home/corpse/qemu-images/vth-107-numa-0.qcow2'/>
+      <target dev='hda' bus='ide'/>
+      <address type='drive' controller='0' bus='0' target='0' unit='0'/>
+    </disk>
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <source file='/root/ISO/vThunder_2_7_2_b340.iso'/>
+      <target dev='hdc' bus='ide'/>
+      <readonly/>
+      <address type='drive' controller='0' bus='1' target='0' unit='0'/>
+    </disk>
+    <controller type='usb' index='0'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x2'/>
+    </controller>
+    <controller type='ide' index='0'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x1'/>
+    </controller>
+    <interface type='bridge'>
+      <mac address='52:54:00:bd:65:b8'/>
+      <source bridge='brq4e8e285e-4a'/>
+      <model type='e1000'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+    </interface>
+    <interface type='hostdev' managed='yes'>
+      <source>
+        <address type='pci' domain='0x0' bus='0x82' slot='0x02' function='0x3'/>
+      </source>
+    </interface>
+    <interface type='hostdev' managed='yes'>
+      <source>
+        <address type='pci' domain='0x0' bus='0x81' slot='0x02' function='0x3'/>
+      </source>
+    </interface>
+    <serial type='pty'>
+      <target port='0'/>
+    </serial>
+    <console type='pty'>
+      <target type='serial' port='0'/>
+    </console>
+    <input type='mouse' bus='ps2'/>
+    <graphics type='vnc' port='-1' autoport='yes'/>
+    <sound model='ich6'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
+    </sound>
+    <video>
+      <model type='cirrus' vram='9216' heads='1'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+    </video>
+    <memballoon model='virtio'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+    </memballoon>
+  </devices>
+</domain>
+

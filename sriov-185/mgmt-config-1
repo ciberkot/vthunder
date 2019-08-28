@@ -1,0 +1,16 @@
+#!/bin/bash
+echo configure ... 
+brctl show |grep -w br105 >/dev/null 2>&1
+if [ $? = 0 ]
+then
+   echo br105 exist
+else
+   brctl addbr br105
+   ip link set dev br105 arp on promisc on multicast on allmulticast on
+fi
+#ip link set dev tapMGMT mtu 1500 arp on promisc on multicast on allmulticast on up
+ip link set dev br105 up
+#ifconfig br105 172.31.31.3 netmask 255.255.255.0
+ip addr add 172.31.31.3/24 dev br105
+
+#brctl addif br105 tapMGMT

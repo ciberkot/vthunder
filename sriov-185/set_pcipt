@@ -1,0 +1,27 @@
+ modprobe vfio-pci
+ modprobe vfio
+ echo 8086 1583 | tee /sys/bus/pci/drivers/vfio-pci/new_id
+ echo "0000:81:00.0" > /sys/bus/pci/drivers/i40e/unbind 
+ echo "0000:81:00.1" > /sys/bus/pci/drivers/i40e/unbind 
+ echo "0000:82:00.1" > /sys/bus/pci/drivers/i40e/unbind 
+ echo "0000:82:00.0" > /sys/bus/pci/drivers/i40e/unbind 
+
+ echo "0000:82:00.0" > /sys/bus/pci/drivers/vfio-pci/bind 
+ echo "0000:82:00.1" > /sys/bus/pci/drivers/vfio-pci/bind 
+ echo "0000:81:00.1" > /sys/bus/pci/drivers/vfio-pci/bind 
+ echo "0000:81:00.0" > /sys/bus/pci/drivers/vfio-pci/bind 
+ chown -R qemu:kvm /dev/vfio/*
+
+
+#unset PCI-PT
+echo "0000:82:00.0" > /sys/bus/pci/drivers/vfio-pci/unbind
+echo "0000:82:00.1" > /sys/bus/pci/drivers/vfio-pci/unbind
+echo "0000:81:00.1" > /sys/bus/pci/drivers/vfio-pci/unbind
+echo "0000:81:00.0" > /sys/bus/pci/drivers/vfio-pci/unbind
+
+echo "0000:81:00.0" > /sys/bus/pci/drivers/i40e/bind
+echo "0000:81:00.1" > /sys/bus/pci/drivers/i40e/bind
+echo "0000:82:00.1" > /sys/bus/pci/drivers/i40e/bind
+echo "0000:82:00.0" > /sys/bus/pci/drivers/i40e/bind
+
+

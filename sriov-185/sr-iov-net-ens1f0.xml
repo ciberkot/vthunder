@@ -1,0 +1,6 @@
+<network>
+  <name>sr-iov-net-40G-XL710-ens1f0</name>
+  <forward mode='hostdev' managed='yes'>
+   <pf dev='ens1f0'/>
+  </forward>
+</network>

@@ -1,0 +1,53 @@
+#cat /sys/bus/pci/devices/0000\:xx\:00.x/numa_node
+
+modprobe vfio-pci
+modprobe vfio
+
+rmmod kvm_intel
+rmmod kvm
+
+#modprobe kvm allow_unsafe_assigned_interrupts=1
+modprobe kvm 
+echo 1 > /sys/module/vfio_iommu_type1/parameters/allow_unsafe_interrupts
+modprobe kvm_intel
+
+ # Customize: Total number of 1Gb and 10Gb data ports to be virtualized.
+ INTF_SET="ens2f0 ens2f1"
+
+ # Customize: Here we assume all the interfaces to be virtualized have names
+ #            eth1, eth2, eth3, ....
+
+ for intf in `echo $INTF_SET`
+ do
+                 echo $intf
+                 echo 4  > /sys/class/net/${intf}/device/sriov_numvfs
+                 ip link set dev ${intf} up
+ done
+ rmmod ixgbevf
+ rmmod i40evf
+
+ modprobe vfio-pci
+ modprobe vfio
+
+#lspci -n -s 83:00.0
+
+ echo 8086 10fb | tee /sys/bus/pci/drivers/vfio-pci/new_id
+
+ chown -R qemu:kvm /dev/vfio/*
+
+ for VF in  0 1 2 3 
+ do
+    echo $VF
+    ip link set dev ens2f0 vf $VF spoof off
+    ip link set dev ens2f1 vf $VF spoof off
+ done
+
+ip link set dev enp130s0f0 vf 0 mac 70:30:70:10:00:00
+ip link set dev enp130s0f0 vf 1 mac 70:30:70:10:01:01
+ip link set dev enp130s0f0 vf 2 mac 70:30:70:10:02:02
+ip link set dev enp130s0f0 vf 3 mac 70:30:70:10:03:03
+ip link set dev enp130s0f1 vf 0 mac 70:30:70:10:00:00
+ip link set dev enp130s0f1 vf 1 mac 70:30:70:10:01:01
+ip link set dev enp130s0f1 vf 2 mac 70:30:70:10:02:02
+ip link set dev enp130s0f1 vf 3 mac 70:30:70:10:03:03
+
