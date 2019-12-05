@@ -1,0 +1,95 @@
+CGN-SO1(config)#sh run
+!Current configuration: 787 bytes
+!Configuration last updated at 20:11:08 GMT Thu Dec 5 2019
+!Configuration last saved at 20:12:50 GMT Thu Dec 5 2019
+!64-bit Advanced Core OS (ACOS) version 4.1.4-GR1-P1, build 78 (Mar-28-2019,21:06)
+!
+glid 1
+  conn-rate-limit 1 per 10
+  over-limit-action log
+!
+class-list CL1
+  10.0.0.0/24 lsn-lid 1
+  20.0.0.11/32 lsn-lid 2
+  20.1.0.11/32 lsn-lid 2
+!
+class-list DNS
+  2001:a10:1::/64 glid 1
+!
+ip tcp syn-cookie threshold 10
+!
+ip dns primary 192.168.1.110
+!
+ip prefix-list LOOPBACK seq 5 permit 200.200.200.0/24 le 32
+!
+hostname CGN-SO1
+!
+glm use-mgmt-port
+glm enable-requests
+glm allocate-bandwidth 100
+glm token vTh0097f6299
+!
+interface ethernet 1
+  name OUTSIDE
+  enable
+  ip address dhcp
+  ip nat outside
+  ipv6 address 2001:a10:1::101/64
+!
+interface ethernet 2
+  name INSIDE
+  enable
+  ip address dhcp
+  ip nat inside
+!
+interface loopback 1
+  ip address 200.200.200.101 255.255.255.255
+!
+!
+resource-track TRACK
+  route 8.8.8.8 255.255.255.255 weight 100
+!
+resource-track TRACK1
+  route 200.200.200.101 255.255.255.255 weight 50
+  route 200.200.200.102 255.255.255.255 weight 50
+  route 200.200.200.103 255.255.255.255 weight 50
+!
+ip route 8.8.8.8 /32 100.0.0.71
+!
+cgnv6 server DNS 8.8.8.8
+  health-check-disable
+  port 53 udp
+    health-check-disable
+!
+cgnv6 service-group SG udp
+  member DNS 53
+!
+cgnv6 template dns DNS64
+  dns64 enable
+  dns64 change-query
+!
+cgnv6 template policy PL
+  class-list DNS
+!
+cgnv6 dns64-virtualserver VIP1 2001:a10:1::53
+  port 53 dns-udp
+    source-nat auto
+    service-group SG
+    template dns DNS64
+    template policy PL
+!
+cgnv6 lsn-lid 1
+!
+cgnv6 nat64 prefix 64:aaaa::/96
+!
+cgnv6 nat64 prefix 64:ff9b::/96
+!
+route-map SCALE_LOOP permit 10
+  match scaleout 1 up
+  match ip address prefix-list LOOPBACK
+!
+route-map SCALE_UP permit 10
+  match scaleout 1 up
+!
+!
+end
